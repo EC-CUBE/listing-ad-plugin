@@ -1,0 +1,6 @@
+name: リスティング広告連携プラグイン
+code: ListingAdCsv
+version: 1.0.0
+service:
+ - ListingAdCsvServiceProvider
+event: ListingAdCsvEvent

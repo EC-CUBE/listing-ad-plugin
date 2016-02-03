@@ -1,0 +1,20 @@
+{#
+This file is part of EC-CUBE
+
+Copyright(c) 2000-2016 LOCKON CO.,LTD. All Rights Reserved.
+http://www.lockon.co.jp/
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+<li class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown">リスティング広告CSV
+        <svg class="cb cb-angle-down icon_down">
+            <use xlink:href="#cb-angle-down"></use>
+        </svg>
+    </a>
+    <ul class="dropdown-menu">
+        <li><a href="{{ url('ListingAdCsv_export', {type : 'google'}) }}">Google入稿用</a></li>
+        <li><a href="{{ url('ListingAdCsv_export', {type : 'yahoo'}) }}">Yahoo!入稿用</a></li>
+    </ul>
+</li>

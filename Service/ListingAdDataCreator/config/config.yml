@@ -1,0 +1,4 @@
+MaxCpc: 21
+DailyBudget: 1000
+CampaignStatus: false # true:配信オン/false:配信停止
+MatchType: 2 # 0:完全一致/1:部分一致/2:フレーズ一致

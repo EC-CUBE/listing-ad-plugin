@@ -1,0 +1,4 @@
+eccube.event.render.admin_product.before:
+  - [onRenderAdminProductBefore, NORMAL]
+eccube.event.render.admin_product_page.before:
+  - [onRenderAdminProductBefore, NORMAL]
