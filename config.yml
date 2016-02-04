@@ -1,4 +1,4 @@
-name: リスティング広告連携プラグイン
+name: リスティング広告入稿用CSV作成プラグイン
 code: ListingAdCsv
 version: 1.0.0
 service:
