@@ -118,7 +118,7 @@ class ProductNameCampaign implements CampaignInterface
             $group->addKeyword($product->getName() . ' ' . $category_name);
         }
 
-        if (!empty($group->getKeywords())) {
+        if (0 < count($group->getKeywords())) {
             array_push($this->ad_groups, $group);
         }
     }
@@ -138,7 +138,7 @@ class ProductNameCampaign implements CampaignInterface
             $group->addKeyword($product->getName() . ' ' . $word);
         }
 
-        if (!empty($group->getKeywords())) {
+        if (0 < count($group->getKeywords())) {
             array_push($this->ad_groups, $group);
         }
     }
