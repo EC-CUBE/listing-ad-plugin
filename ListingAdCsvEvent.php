@@ -12,6 +12,7 @@
 namespace Plugin\ListingAdCsv;
 
 
+use Eccube\Common\Constant;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Form\FormFactory;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,10 +34,33 @@ class ListingAdCsvEvent
     }
 
     /**
+     * New event function on version >= 3.0.9 (new hook point)
+     * @param \Eccube\Event\TemplateEvent $event
+     */
+    public function onAdminProductInit(\Eccube\Event\TemplateEvent $event)
+    {
+        // content
+        $source = $event->getSource();
+        // position
+        $search = '<li id="result_list__csv_menu" class="dropdown">';
+        // template need addition
+        $parts = $this->app['twig']->getLoader()->getSource('ListingAdCsv\Resource\template\Admin\dropdown_parts.twig');
+        $replace = $parts.$search;
+        $source = str_replace($search, $replace, $source);
+
+        $event->setSource($source);
+    }
+
+    /**
      * @param FilterResponseEvent $event
      */
     public function onRenderAdminProductBefore(FilterResponseEvent $event)
     {
+        // support new hook point
+        if ($this->supportNewHookPoint()) {
+            return;
+        }
+
         $request = $event->getRequest();
         $response = $event->getResponse();
 
@@ -57,7 +81,6 @@ class ListingAdCsvEvent
     {
         $crawler = new Crawler($response->getContent());
         $html = $this->getHtml($crawler);
-
         /** @var FormFactory $formFactory */
 //        $formFactory = $this->app['form.factory'];
 //        $form = $formFactory->createBuilder('shopping')->getForm();
@@ -97,4 +120,15 @@ class ListingAdCsvEvent
 
         return html_entity_decode($html, ENT_NOQUOTES, 'UTF-8');
     }
+
+    /**
+     * v3.0.9以降のフックポイントに対応しているのか
+     *
+     * @return bool
+     */
+    private function supportNewHookPoint()
+    {
+        return version_compare('3.0.9', Constant::VERSION, '<=');
+    }
+
 }

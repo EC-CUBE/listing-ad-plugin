@@ -2,3 +2,8 @@ eccube.event.render.admin_product.before:
   - [onRenderAdminProductBefore, NORMAL]
 eccube.event.render.admin_product_page.before:
   - [onRenderAdminProductBefore, NORMAL]
+
+Admin/Product/index.twig:
+  - [onAdminProductInit, NORMAL]
+admin.product.page.index.initialize:
+  - [onAdminProductInit, NORMAL]
