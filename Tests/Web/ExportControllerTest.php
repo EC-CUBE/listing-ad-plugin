@@ -19,7 +19,7 @@ class ExportControllerTest extends AbstractAdminWebTestCase
      * @param $expected
      * @dataProvider dataProvider
      */
-    public function testExport_Google($type, $expected)
+    public function testExport($type, $expected)
     {
         $this->client->request('GET', $this->app->url('ListingAdCsv_export', array('type' => $type)));
         $this->actual = $this->client->getResponse()->headers->get('Content-Type') == 'application/octet-stream';
