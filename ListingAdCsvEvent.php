@@ -24,6 +24,7 @@ class ListingAdCsvEvent
     /** @var \Eccube\Application $app */
     private $app;
 
+    private $legacyEvent;
     /**
      * GiftWrappingEvent constructor.
      * @param  \Eccube\Application $app
@@ -31,6 +32,7 @@ class ListingAdCsvEvent
     public function __construct($app)
     {
         $this->app = $app;
+        $this->legacyEvent = new ListingAdCsvLegacyEvent($app);
     }
 
     /**
@@ -60,65 +62,7 @@ class ListingAdCsvEvent
         if ($this->supportNewHookPoint()) {
             return;
         }
-
-        $request = $event->getRequest();
-        $response = $event->getResponse();
-
-        $html = $this->getHtmlWrapping($request, $response);
-        $response->setContent($html);
-
-        $event->setResponse($response);
-    }
-
-    /**
-     * HTMLの加工
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return string
-     */
-    private function getHtmlWrapping($request, $response)
-    {
-        $crawler = new Crawler($response->getContent());
-        $html = $this->getHtml($crawler);
-        /** @var FormFactory $formFactory */
-//        $formFactory = $this->app['form.factory'];
-//        $form = $formFactory->createBuilder('shopping')->getForm();
-//
-       $parts = $this->app->renderView('ListingAdCsv\Resource\template\Admin\dropdown_parts.twig');
-
-        // TODO 挿入位置の指定方法、もっとよい方法ないのか？
-        try {
-            $crawler = $crawler->filter('ul.sort-dd');
-            if ($crawler->count() != 0) {
-                $oldHtml = $crawler->last()->html();
-                $newHtml = $oldHtml . $parts;
-                $html = str_replace($oldHtml, $newHtml, $html);
-            }
-        } catch (\InvalidArgumentException $e) {
-            // ignore
-        }
-
-        return $html;
-    }
-
-    /**
-     * 解析用HTMLを取得
-     *
-     * @param Crawler $crawler
-     * @return string
-     */
-    private function getHtml(Crawler $crawler)
-    {
-        $html = '';
-
-        /** @var \DOMElement $domElement */
-        foreach ($crawler as $domElement) {
-            $domElement->ownerDocument->formatOutput = true;
-            $html .= $domElement->ownerDocument->saveHTML();
-        }
-
-        return html_entity_decode($html, ENT_NOQUOTES, 'UTF-8');
+        $this->legacyEvent->onRenderAdminProductBefore($event);
     }
 
     /**
@@ -130,5 +74,4 @@ class ListingAdCsvEvent
     {
         return version_compare('3.0.9', Constant::VERSION, '<=');
     }
-
 }
