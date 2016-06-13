@@ -3,7 +3,8 @@ eccube.event.render.admin_product.before:
 eccube.event.render.admin_product_page.before:
   - [onRenderAdminProductBefore, NORMAL]
 
-Admin/Product/index.twig:
+# New hook point event
+eccube.event.route.admin_product.response:
   - [onAdminProductInit, NORMAL]
-admin.product.page.index.initialize:
+eccube.event.route.admin_product_page.response:
   - [onAdminProductInit, NORMAL]

@@ -13,10 +13,6 @@ namespace Plugin\ListingAdCsv;
 
 
 use Eccube\Common\Constant;
-use Symfony\Component\DomCrawler\Crawler;
-use Symfony\Component\Form\FormFactory;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 
 class ListingAdCsvEvent
@@ -24,7 +20,11 @@ class ListingAdCsvEvent
     /** @var \Eccube\Application $app */
     private $app;
 
+    /**
+     * @var ListingAdCsvLegacyEvent
+     */
     private $legacyEvent;
+
     /**
      * GiftWrappingEvent constructor.
      * @param  \Eccube\Application $app
@@ -37,20 +37,11 @@ class ListingAdCsvEvent
 
     /**
      * New event function on version >= 3.0.9 (new hook point)
-     * @param \Eccube\Event\TemplateEvent $event
+     * @param FilterResponseEvent $event
      */
-    public function onAdminProductInit(\Eccube\Event\TemplateEvent $event)
+    public function onAdminProductInit(FilterResponseEvent $event)
     {
-        // content
-        $source = $event->getSource();
-        // position
-        $search = '<li id="result_list__csv_menu" class="dropdown">';
-        // template need addition
-        $parts = $this->app['twig']->getLoader()->getSource('ListingAdCsv\Resource\template\Admin\dropdown_parts.twig');
-        $replace = $parts.$search;
-        $source = str_replace($search, $replace, $source);
-
-        $event->setSource($source);
+        $this->legacyEvent->onRenderAdminProductBefore($event);
     }
 
     /**
