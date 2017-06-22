@@ -11,7 +11,10 @@
 
 namespace Plugin\ListingAdCsv\Service\ListingAdDataCreator;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\EntityManager;
 use Eccube\Application;
+use Eccube\Common\Constant;
 use Eccube\Entity\Product;
 use Eccube\Util\FormUtil;
 use Plugin\ListingAdCsv\Service\ListingAdDataCreator\Campaign\ProductNameCampaign;
@@ -86,8 +89,8 @@ class ListingAdDataCreatorService
      */
     private function getFilteredProductsQuery(Application $app, Request $request)
     {
-        $qb = $this->getProductQueryBuilder($app, $request);
-
+        $em = $app['orm.em'];
+        $qb = $this->getProductQueryBuilder($app, $request, $em);
         $qb->resetDQLPart('select')
             ->resetDQLPart('orderBy')
             ->select('p')
@@ -102,25 +105,61 @@ class ListingAdDataCreatorService
      *
      * @param Application $app
      * @param Request $request
+     * @param EntityManager $em
      * @return \Doctrine\ORM\QueryBuilder
      */
-    private function getProductQueryBuilder(Application $app, Request $request)
+    private function getProductQueryBuilder(Application $app, Request $request, $em)
     {
         $session = $request->getSession();
         $viewData = $session->get('eccube.admin.product.search', array());
-        $searchForm = $app['form.factory']->create('admin_search_product');
-        $searchData = FormUtil::submitAndGetData($searchForm, $viewData);
-        if (isset($viewData['link_status']) && strlen($viewData['link_status'])) {
-            $searchData['link_status'] = $app['eccube.repository.master.disp']->find($viewData['link_status']);
-        }
-        if (isset($viewData['stock_status'])) {
-            $searchData['stock_status'] = $viewData['stock_status'];
+        $searchData = $viewData;
+        if (version_compare(Constant::VERSION, '3.0.15', '<')) {
+            if (!empty($searchData)) {
+                $this->findDeserializeObjects($searchData, $em);
+            }
+        } else {
+            $searchForm = $app['form.factory']->create('admin_search_product');
+            $searchData = FormUtil::submitAndGetData($searchForm, $viewData);
+            if (isset($viewData['link_status']) && strlen($viewData['link_status'])) {
+                $searchData['link_status'] = $app['eccube.repository.master.disp']->find($viewData['link_status']);
+            }
+            if (isset($viewData['stock_status'])) {
+                $searchData['stock_status'] = $viewData['stock_status'];
+            }
         }
 
         // 商品データのクエリビルダを構築
         $qb = $app['eccube.repository.product']->getQueryBuilderBySearchDataForAdmin($searchData);
 
         return $qb;
+    }
+
+    /**
+     * セッションでシリアライズされた Doctrine のオブジェクトを取得し直す.
+     *
+     * ※特定の検索条件で受注CSVダウンロードをするとシステムエラー #1384 の不具合対応のため、
+     * 　本体の修正コードを移植する。
+     *
+     * XXX self::setExportQueryBuilder() をコールする前に EntityManager を取得したいので、引数で渡している
+     *
+     * @param array $searchData セッションから取得した検索条件の配列
+     * @param EntityManager $em
+     */
+    private function findDeserializeObjects(array &$searchData, $em)
+    {
+        foreach ($searchData as &$Conditions) {
+            if ($Conditions instanceof ArrayCollection) {
+                $Conditions = new ArrayCollection(
+                    array_map(
+                        function ($Entity) use ($em) {
+                            return $em->getRepository(get_class($Entity))->find($Entity->getId());
+                        }, $Conditions->toArray()
+                    )
+                );
+            } elseif ($Conditions instanceof \Eccube\Entity\AbstractEntity) {
+                $Conditions = $em->getRepository(get_class($Conditions))->find($Conditions->getId());
+            }
+        }
     }
 
     /**
