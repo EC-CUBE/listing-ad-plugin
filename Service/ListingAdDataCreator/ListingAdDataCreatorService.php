@@ -108,7 +108,7 @@ class ListingAdDataCreatorService
     {
         $session = $request->getSession();
         $viewData = $session->get('eccube.admin.product.search', array());
-        $searchForm = $app['form.factory']->create('admin_search_product', null, array('csrf_protection' => true));
+        $searchForm = $app['form.factory']->create('admin_search_product');
         $searchData = FormUtil::submitAndGetData($searchForm, $viewData);
         if (isset($viewData['link_status']) && strlen($viewData['link_status'])) {
             $searchData['link_status'] = $app['eccube.repository.master.disp']->find($viewData['link_status']);
