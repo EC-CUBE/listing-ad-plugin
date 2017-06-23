@@ -108,16 +108,18 @@ class ListingAdDataCreatorService
      * @param EntityManager $em
      * @return \Doctrine\ORM\QueryBuilder
      */
-    private function getProductQueryBuilder(Application $app, Request $request, $em)
+    public function getProductQueryBuilder(Application $app, Request $request, $em)
     {
         $session = $request->getSession();
-        $viewData = $session->get('eccube.admin.product.search', array());
-        $searchData = $viewData;
         if (version_compare(Constant::VERSION, '3.0.15', '<')) {
-            if (!empty($searchData)) {
+            if ($session->has('eccube.admin.product.search')) {
+                $searchData = $session->get('eccube.admin.product.search');
                 $this->findDeserializeObjects($searchData, $em);
+            } else {
+                $searchData = array();
             }
         } else {
+            $viewData = $session->get('eccube.admin.product.search', array());
             $searchForm = $app['form.factory']->create('admin_search_product', null, array('csrf_protection' => false));
             $searchData = FormUtil::submitAndGetData($searchForm, $viewData);
             if (isset($viewData['link_status']) && strlen($viewData['link_status'])) {
@@ -145,7 +147,7 @@ class ListingAdDataCreatorService
      * @param array $searchData セッションから取得した検索条件の配列
      * @param EntityManager $em
      */
-    private function findDeserializeObjects(array &$searchData, $em)
+    protected function findDeserializeObjects(array &$searchData, $em)
     {
         foreach ($searchData as &$Conditions) {
             if ($Conditions instanceof ArrayCollection) {
