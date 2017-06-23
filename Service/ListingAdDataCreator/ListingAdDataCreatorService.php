@@ -118,7 +118,7 @@ class ListingAdDataCreatorService
                 $this->findDeserializeObjects($searchData, $em);
             }
         } else {
-            $searchForm = $app['form.factory']->create('admin_search_product');
+            $searchForm = $app['form.factory']->create('admin_search_product', null, array('csrf_protection' => false));
             $searchData = FormUtil::submitAndGetData($searchForm, $viewData);
             if (isset($viewData['link_status']) && strlen($viewData['link_status'])) {
                 $searchData['link_status'] = $app['eccube.repository.master.disp']->find($viewData['link_status']);
