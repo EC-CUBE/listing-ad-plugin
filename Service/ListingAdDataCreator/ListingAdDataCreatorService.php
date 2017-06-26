@@ -14,8 +14,9 @@ namespace Plugin\ListingAdCsv\Service\ListingAdDataCreator;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManager;
 use Eccube\Application;
+use Eccube\Common\Constant;
 use Eccube\Entity\Product;
-use Eccube\Repository\ProductRepository;
+use Eccube\Util\FormUtil;
 use Plugin\ListingAdCsv\Service\ListingAdDataCreator\Campaign\ProductNameCampaign;
 use Plugin\ListingAdCsv\Service\ListingAdDataCreator\Rows\Google\GoogleRowCreator;
 use Plugin\ListingAdCsv\Service\ListingAdDataCreator\Rows\RowCreatorInterface;
@@ -95,6 +96,7 @@ class ListingAdDataCreatorService
             ->select('p')
             ->orderBy('p.update_date', 'DESC')
             ->distinct();
+
         return $qb->getQuery();
     }
 
@@ -109,14 +111,28 @@ class ListingAdDataCreatorService
     public function getProductQueryBuilder(Application $app, Request $request, $em)
     {
         $session = $request->getSession();
-        if ($session->has('eccube.admin.product.search')) {
-            $searchData = $session->get('eccube.admin.product.search');
-            $this->findDeserializeObjects($searchData, $em);
+        if (version_compare(Constant::VERSION, '3.0.15', '<')) {
+            if ($session->has('eccube.admin.product.search')) {
+                $searchData = $session->get('eccube.admin.product.search');
+                $this->findDeserializeObjects($searchData, $em);
+            } else {
+                $searchData = array();
+            }
         } else {
-            $searchData = array();
+            $viewData = $session->get('eccube.admin.product.search', array());
+            $searchForm = $app['form.factory']->create('admin_search_product', null, array('csrf_protection' => false));
+            $searchData = FormUtil::submitAndGetData($searchForm, $viewData);
+            if (isset($viewData['link_status']) && strlen($viewData['link_status'])) {
+                $searchData['link_status'] = $app['eccube.repository.master.disp']->find($viewData['link_status']);
+            }
+            if (isset($viewData['stock_status'])) {
+                $searchData['stock_status'] = $viewData['stock_status'];
+            }
         }
+
         // 商品データのクエリビルダを構築
         $qb = $app['eccube.repository.product']->getQueryBuilderBySearchDataForAdmin($searchData);
+
         return $qb;
     }
 
