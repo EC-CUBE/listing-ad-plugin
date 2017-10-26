@@ -12,10 +12,7 @@
 namespace Plugin\ListingAdCsv;
 
 
-use Symfony\Component\DomCrawler\Crawler;
-use Symfony\Component\Form\FormFactory;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Eccube\Common\Constant;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 
 class ListingAdCsvEvent
@@ -24,12 +21,27 @@ class ListingAdCsvEvent
     private $app;
 
     /**
+     * @var ListingAdCsvLegacyEvent
+     */
+    private $legacyEvent;
+
+    /**
      * GiftWrappingEvent constructor.
      * @param  \Eccube\Application $app
      */
     public function __construct($app)
     {
         $this->app = $app;
+        $this->legacyEvent = new ListingAdCsvLegacyEvent($app);
+    }
+
+    /**
+     * New event function on version >= 3.0.9 (new hook point)
+     * @param FilterResponseEvent $event
+     */
+    public function onAdminProductInit(FilterResponseEvent $event)
+    {
+        $this->legacyEvent->onRenderAdminProductBefore($event);
     }
 
     /**
@@ -37,64 +49,20 @@ class ListingAdCsvEvent
      */
     public function onRenderAdminProductBefore(FilterResponseEvent $event)
     {
-        $request = $event->getRequest();
-        $response = $event->getResponse();
-
-        $html = $this->getHtmlWrapping($request, $response);
-        $response->setContent($html);
-
-        $event->setResponse($response);
+        // support new hook point
+        if ($this->supportNewHookPoint()) {
+            return;
+        }
+        $this->legacyEvent->onRenderAdminProductBefore($event);
     }
 
     /**
-     * HTMLの加工
+     * v3.0.9以降のフックポイントに対応しているのか
      *
-     * @param Request $request
-     * @param Response $response
-     * @return string
+     * @return bool
      */
-    private function getHtmlWrapping($request, $response)
+    private function supportNewHookPoint()
     {
-        $crawler = new Crawler($response->getContent());
-        $html = $this->getHtml($crawler);
-
-        /** @var FormFactory $formFactory */
-//        $formFactory = $this->app['form.factory'];
-//        $form = $formFactory->createBuilder('shopping')->getForm();
-//
-       $parts = $this->app->renderView('ListingAdCsv\Resource\template\Admin\dropdown_parts.twig');
-
-        // TODO 挿入位置の指定方法、もっとよい方法ないのか？
-        try {
-            $crawler = $crawler->filter('ul.sort-dd');
-            if ($crawler->count() != 0) {
-                $oldHtml = $crawler->last()->html();
-                $newHtml = $oldHtml . $parts;
-                $html = str_replace($oldHtml, $newHtml, $html);
-            }
-        } catch (\InvalidArgumentException $e) {
-            // ignore
-        }
-
-        return $html;
-    }
-
-    /**
-     * 解析用HTMLを取得
-     *
-     * @param Crawler $crawler
-     * @return string
-     */
-    private function getHtml(Crawler $crawler)
-    {
-        $html = '';
-
-        /** @var \DOMElement $domElement */
-        foreach ($crawler as $domElement) {
-            $domElement->ownerDocument->formatOutput = true;
-            $html .= $domElement->ownerDocument->saveHTML();
-        }
-
-        return html_entity_decode($html, ENT_NOQUOTES, 'UTF-8');
+        return version_compare('3.0.9', Constant::VERSION, '<=');
     }
 }
