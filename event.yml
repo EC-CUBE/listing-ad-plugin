@@ -2,3 +2,9 @@ eccube.event.render.admin_product.before:
   - [onRenderAdminProductBefore, NORMAL]
 eccube.event.render.admin_product_page.before:
   - [onRenderAdminProductBefore, NORMAL]
+
+# New hook point event
+eccube.event.route.admin_product.response:
+  - [onAdminProductInit, NORMAL]
+eccube.event.route.admin_product_page.response:
+  - [onAdminProductInit, NORMAL]
